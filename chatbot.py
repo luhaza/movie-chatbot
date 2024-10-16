@@ -21,7 +21,7 @@ class Chatbot:
 
     def __init__(self):
         # The chatbot's default name is `moviebot`.
-        self.name = 'moviebot' # TODO: Give your chatbot a new name.
+        self.name = 'Letterbot' # TODO: Give your chatbot a new name.
 
         # This matrix has the following shape: num_movies x num_users
         # The values stored in each row i and column j is the rating for
@@ -49,7 +49,7 @@ class Chatbot:
         """
 
         # TODO: delete and replace the line below
-        return """
+        """
         Your task is to implement the chatbot as detailed in the
         instructions (README.md).
 
@@ -57,34 +57,22 @@ class Chatbot:
 
         TODO: Write the description for your own chatbot here in the `intro()` function.
         """
+        return "User instructions:"
 
     def greeting(self) -> str:
         """Return a message that the chatbot uses to greet the user."""
-        
-        ########################################################################
-        # TODO: Delete the line below and replace with your own                #
-        ########################################################################
 
-        greeting_message = "How can I help you?"
+        greeting_message = f'''Hi! I am {self.name}! I am a chatbot that specializes in movie recommendations. My personal favorite is "The Prestige." What is yours?'''
 
-        ########################################################################
-        #                             END OF YOUR CODE                         #
-        ########################################################################
         return greeting_message
 
     def goodbye(self) -> str:
         """
         Return a message that the chatbot uses to bid farewell to the user.
         """
-        ########################################################################
-        # TODO: Delete the line below and replace with your own                #
-        ########################################################################
+       
+        goodbye_message = "I hope my recommendations helped. Have a nice day!"
 
-        goodbye_message = "Have a nice day!"
-
-        ########################################################################
-        #                          END OF YOUR CODE                            #
-        ########################################################################
         return goodbye_message
 
     def debug(self, line):
@@ -179,13 +167,9 @@ class Chatbot:
         Hints: 
             - What regular expressions would be helpful here? 
         """
-        ########################################################################
-        #                          START OF YOUR CODE                          #
-        ########################################################################                                             
-        return [] # TODO: delete and replace this line
-        ########################################################################
-        #                          END OF YOUR CODE                            #
-        ########################################################################
+        regex = r'"(.*?)"'
+        matches = re.findall(regex, user_input)                                      
+        return matches
 
     def find_movies_idx_by_title(self, title:str) -> List[int]:
         """ 
@@ -221,14 +205,16 @@ class Chatbot:
             - Our solution only takes about 7 lines. If you're using much more 
             than that try to think of a more concise approach 
         """
-        ########################################################################
-        #                          START OF YOUR CODE                          #
-        ########################################################################                                                 
-        return [] # TODO: delete and replace this line
-        ########################################################################
-        #                          END OF YOUR CODE                            #
-        ########################################################################
+        ret = []
 
+        title = re.escape(title)
+        regex = rf'{title}'
+
+        for index, t in enumerate(self.titles):
+            if re.search(regex, t[0]):
+                ret.append(index)
+
+        return ret
 
     def disambiguate_candidates(self, clarification: str, candidates: list) -> List[int]: 
         """
@@ -281,13 +267,7 @@ class Chatbot:
             - You might find one or more of the following helpful: 
               re.search, re.findall, re.match, re.escape, re.compile
         """
-        ########################################################################
-        #                          START OF YOUR CODE                          #
-        ########################################################################                                                 
-        return [] # TODO: delete and replace this line
-        ########################################################################
-        #                          END OF YOUR CODE                            #
-        ########################################################################
+        
 
     ############################################################################
     # 3. Sentiment                                                             #

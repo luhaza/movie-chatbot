@@ -20,8 +20,7 @@ class Chatbot:
     """Class that implements the chatbot for CSCI 375's Midterm Project"""
 
     def __init__(self):
-        # The chatbot's default name is `moviebot`.
-        self.name = 'Letterbot' # TODO: Give your chatbot a new name.
+        self.name = 'Letterbot'
 
         # This matrix has the following shape: num_movies x num_users
         # The values stored in each row i and column j is the rating for
@@ -33,8 +32,6 @@ class Chatbot:
 
         # Train the classifier
         self.train_logreg_sentiment_classifier()
-
-        # TODO: put any other class variables you need here 
 
     ############################################################################
     # 1. WARM UP REPL                                                          #
@@ -48,7 +45,6 @@ class Chatbot:
         chatbot can do and how the user can interact with it.
         """
 
-        # TODO: delete and replace the line below
         """
         Your task is to implement the chatbot as detailed in the
         instructions (README.md).
@@ -62,7 +58,7 @@ class Chatbot:
     def greeting(self) -> str:
         """Return a message that the chatbot uses to greet the user."""
 
-        greeting_message = f'''Hi! I am {self.name}! I am a chatbot that specializes in movie recommendations. My personal favorite is "The Prestige." What is yours?'''
+        greeting_message = f'Hi! I am {self.name}! I am a chatbot that specializes in movie recommendations. My personal favorite is "The Prestige." what is yours?'
 
         return greeting_message
 
@@ -267,6 +263,15 @@ class Chatbot:
             - You might find one or more of the following helpful: 
               re.search, re.findall, re.match, re.escape, re.compile
         """
+        candidate_strings = [self.titles[candidate] for candidate in candidates]
+        clarification = re.escape(clarification)
+        regex = rf'{clarification}'
+        
+        for index, c in enumerate(candidate_strings):
+            if re.search(regex, c[0]) is None:
+                del candidates[index]
+
+        return candidates
         
 
     ############################################################################

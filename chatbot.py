@@ -53,12 +53,14 @@ class Chatbot:
 
         TODO: Write the description for your own chatbot here in the `intro()` function.
         """
-        return "User instructions:"
+        intro_message = "This chatbot will provide you with movie recommendations.\nPlease put all movie titles in double quotes (\"\")\nType :quit to quit"
+
+        return intro_message
 
     def greeting(self) -> str:
         """Return a message that the chatbot uses to greet the user."""
 
-        greeting_message = f'Hi! I am {self.name}! I am a chatbot that specializes in movie recommendations. My personal favorite is "The Prestige." what is yours?'
+        greeting_message = f'Hi! I am {self.name}! I am a chatbot that specializes in movie recommendations. My personal favorite is "The Prestige." What is yours?'
 
         return greeting_message
 
@@ -263,15 +265,17 @@ class Chatbot:
             - You might find one or more of the following helpful: 
               re.search, re.findall, re.match, re.escape, re.compile
         """
-        candidate_strings = [self.titles[candidate] for candidate in candidates]
-        clarification = re.escape(clarification)
-        regex = rf'{clarification}'
-        
-        for index, c in enumerate(candidate_strings):
-            if re.search(regex, c[0]) is None:
-                del candidates[index]
+        matches = []
 
-        return candidates
+        clarification = re.escape(clarification.strip())
+
+        for index in candidates:
+            title = self.titles[index][0]
+
+            if re.search(clarification, title, re.IGNORECASE):
+                matches.append(index)
+
+        return matches
         
 
     ############################################################################

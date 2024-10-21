@@ -378,10 +378,11 @@ class Chatbot:
         # convert texts
         texts = [text.lower() for text in texts]
         self.count_vectorizer = CountVectorizer()
-        data['X_train'] = self.count_vectorizer.fit_transform(texts).toarray()
+        data['X_train'] = self.count_vectorizer.fit_transform(texts)
+        # .toarray()
 
         # training logreg on training data
-        self.model = linear_model.LogisticRegression(random_state=0).fit(data['X_train'], data['Y_train']) 
+        self.model = linear_model.LogisticRegression(C=1.0, max_iter=1000, penalty='l2', solver='saga', random_state=0).fit(data['X_train'], data['Y_train']) 
         ########################################################################
         #                          END OF YOUR CODE                            #
         ########################################################################
@@ -421,12 +422,10 @@ class Chatbot:
         ########################################################################
         #                          START OF YOUR CODE                          #
         ########################################################################                                             
-        # use CountVectorizer again
+        # lowercase
         user_input = user_input.lower()
-
-        input_array = [user_input]
-
-        input = self.count_vectorizer.transform(input_array).toarray()
+        
+        input = self.count_vectorizer.transform([user_input]).toarray()
 
         # predict output
         output = self.model.predict(input)

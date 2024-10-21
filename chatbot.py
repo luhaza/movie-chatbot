@@ -430,7 +430,6 @@ class Chatbot:
 
         # predict output
         output = self.model.predict(input)
-        print(np.sum(input))
         if np.sum(input) == 0: return 0
 
         return output[0]

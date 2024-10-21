@@ -315,8 +315,26 @@ class Chatbot:
         """
         ########################################################################
         #                          START OF YOUR CODE                          #
-        ########################################################################                                                  
-        return 0 # TODO: delete and replace this line
+        ########################################################################      
+
+        regex = r'\b\w+\b'
+        tokens = re.findall(regex, user_input.lower())
+        pos_tok_count, neg_tok_count = 0,0
+
+        for token in tokens:
+            if token in self.sentiment:
+                token_sentiment = self.sentiment[token]
+                if token_sentiment == "pos":
+                    pos_tok_count += 1
+                else:
+                    neg_tok_count += 1
+        
+        if neg_tok_count > pos_tok_count:
+            return -1
+        elif neg_tok_count < pos_tok_count:
+            return 1 
+        else:
+            return 0
         ########################################################################
         #                          END OF YOUR CODE                            #
         ########################################################################
@@ -351,9 +369,19 @@ class Chatbot:
         ########################################################################
         #                          START OF YOUR CODE                          #
         ########################################################################                                                
-        
-        pass # TODO: delete and replace this line
+        data = {}
 
+        # transform list y into list of -1 if 'rotten' and 1 if 'fresh'
+        converted_y = [-1 if rating == 'Rotten' else 1 for rating in y]
+        data['Y_train'] = np.array(converted_y)
+    
+        # convert texts
+        texts = [text.lower() for text in texts]
+        self.count_vectorizer = CountVectorizer()
+        data['X_train'] = self.count_vectorizer.fit_transform(texts).toarray()
+
+        # training logreg on training data
+        self.model = linear_model.LogisticRegression(random_state=0).fit(data['X_train'], data['Y_train']) 
         ########################################################################
         #                          END OF YOUR CODE                            #
         ########################################################################
@@ -393,7 +421,19 @@ class Chatbot:
         ########################################################################
         #                          START OF YOUR CODE                          #
         ########################################################################                                             
-        return 0 # TODO: delete and replace this line
+        # use CountVectorizer again
+        user_input = user_input.lower()
+
+        input_array = [user_input]
+
+        input = self.count_vectorizer.transform(input_array).toarray()
+
+        # predict output
+        output = self.model.predict(input)
+        print(np.sum(input))
+        if np.sum(input) == 0: return 0
+
+        return output[0]
         ########################################################################
         #                          END OF YOUR CODE                            #
         ########################################################################

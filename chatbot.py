@@ -379,7 +379,6 @@ class Chatbot:
         texts = [text.lower() for text in texts]
         self.count_vectorizer = CountVectorizer()
         data['X_train'] = self.count_vectorizer.fit_transform(texts)
-        # .toarray()
 
         # training logreg on training data
         self.model = linear_model.LogisticRegression(C=1.0, max_iter=1000, penalty='l2', solver='saga', random_state=0).fit(data['X_train'], data['Y_train']) 
@@ -472,7 +471,33 @@ class Chatbot:
         """ 
         ########################################################################
         #                          START OF YOUR CODE                          #
-        ########################################################################                                                    
+        ########################################################################       
+
+         # check if user_ratings has a count of at least 5. if yes, run util.recommend(). if not, terminate
+        if len(user_ratings) > 5:
+            print("Must have at least 5 ratings to make a recommendation")
+            return [""]
+
+        user_ratings = np.array(user_ratings)
+
+        print(len(self.ratings))
+        print(type(user_ratings))
+        # print(len(user_ratings))
+        
+
+        # result = util.recommend(user_ratings, self.ratings, num_return)
+
+        # print(type(result))
+        # print(result) 
+
+        # call util.recommend() num_return times, to get num_return recommendations. combine the recommendations into a string
+        #   (user_rating_all_movies: np.ndarray, ratings_matrix:np.ndarray, num_return: int=10)
+        #   user_ratings is probably user_rating_all_movies, self.ratings is probably the ratings_matrix, and num_return == num_return
+
+        # take output of util.recommend(), and convert indices of movies into names of movies
+
+        # return list of movie names
+                                                     
         return [""]  # TODO: delete and replace this line
         ########################################################################
         #                          END OF YOUR CODE                            #

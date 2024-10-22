@@ -473,32 +473,24 @@ class Chatbot:
         #                          START OF YOUR CODE                          #
         ########################################################################       
 
-         # check if user_ratings has a count of at least 5. if yes, run util.recommend(). if not, terminate
-        if len(user_ratings) > 5:
-            print("Must have at least 5 ratings to make a recommendation")
-            return [""]
-
-        user_ratings = np.array(user_ratings)
-
-        print(len(self.ratings))
-        print(type(user_ratings))
-        # print(len(user_ratings))
+         # check if user_ratings has a count of at least 5. if yes, run util.recommend(). if not, raise error
+        if len(user_ratings) < 5:
+            raise ValueError("at least 5 ratings required to make a recommendation")
         
+        # convert user_ratings into the same type and shape of self.ratings to use as argument for util.recommend
+        num_movies = self.ratings.shape[0]
+        user_ratings_array = np.zeros(num_movies)
 
-        # result = util.recommend(user_ratings, self.ratings, num_return)
+        for movie_idx, rating in user_ratings.items():
+            user_ratings_array[movie_idx] = rating
 
-        # print(type(result))
-        # print(result) 
-
-        # call util.recommend() num_return times, to get num_return recommendations. combine the recommendations into a string
-        #   (user_rating_all_movies: np.ndarray, ratings_matrix:np.ndarray, num_return: int=10)
-        #   user_ratings is probably user_rating_all_movies, self.ratings is probably the ratings_matrix, and num_return == num_return
+        # call util.recommend
+        recommended_movie_indices = util.recommend(user_ratings_array, self.ratings, num_return)
 
         # take output of util.recommend(), and convert indices of movies into names of movies
+        recommended_movies = [self.titles[i][0] for i in recommended_movie_indices]
 
-        # return list of movie names
-                                                     
-        return [""]  # TODO: delete and replace this line
+        return recommended_movies
         ########################################################################
         #                          END OF YOUR CODE                            #
         ########################################################################

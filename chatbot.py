@@ -377,7 +377,10 @@ class Chatbot:
     
         # convert texts
         texts = [text.lower() for text in texts]
-        self.count_vectorizer = CountVectorizer()
+        self.count_vectorizer = CountVectorizer(min_df=20, #only look at words that occur in at least 20 docs
+                                stop_words='english', # remove english stop words
+                                max_features=1000, #only select the top 1000 features 
+                                ) 
         data['X_train'] = self.count_vectorizer.fit_transform(texts)
 
         # training logreg on training data
@@ -506,7 +509,7 @@ class Chatbot:
         Example: 
             User types 'I liek "Avatar"' and the bot is able to correct "liek" to "like"
         """
-        vocabulary = ['like', 'live', 'lives', 'look', 'liked', 'lie', 'life']
+        vocabulary = ['like', 'live', 'lives', 'look', 'liked', 'lie', 'life'] # potentially use a full vocab for spell checking 
     
         # calculate hamming distance
         def hamming_distance(word1: str, word2: str) -> int:

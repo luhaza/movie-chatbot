@@ -542,19 +542,55 @@ class Chatbot:
     # 5. Open-ended                                                            #
     ############################################################################
 
-    def function1():
+    def function1(self, user_input: str) -> str:
         """
-        TODO: delete and replace with your function.
-        Be sure to put an adequate description in this docstring.  
+        This function deals with simple spelling mistakes
+        Example: 
+            User types 'I liek "Avatar"' and the bot is able to correct "liek" to "like"
         """
-        pass
+        vocabulary = ['like', 'live', 'lives', 'look', 'liked', 'lie', 'life']
+    
+        # calculate hamming distance
+        def hamming_distance(word1: str, word2: str) -> int:
+            if len(word1) != len(word2):
+                return float('inf')  # large num if not equal len
+            
+            # use zip to create char pairs at each index for words 
+            match_chars = zip(word1, word2)
 
-    def function2():
+            # create list of True/False depending on if char is = 
+            matching_or_not = [c1 != c2 for c1, c2 in match_chars]
+
+            # return True's (1) + False's (0)
+            return sum(matching_or_not)
+        
+        # use hamming_distance to correct the misspelled word
+        def hamming_spell_check(word: str, vocabulary: List[str]) -> str:
+            # candidates are words that have same length as word...hamming
+            candidates = [vw for vw in vocabulary if len(vw) == len(word)]
+            if not candidates:
+                return word  # return word as is
+
+            # find w with smallest hamming distance to word and return
+            return min(candidates, key=lambda w: hamming_distance(word, w))
+        
+        # apply spell checker
+        corrected_words = [hamming_spell_check(token, vocabulary) for token in user_input.split()]
+        return ' '.join(corrected_words)
+
+    def function2(self, user_input: str):
         """
         TODO: delete and replace with your function.
         Be sure to put an adequate description in this docstring.  
         """
-        pass  
+        predicted_sentiment = self.predict_sentiment_rule_based(user_input)
+
+        if predicted_sentiment == -1:
+            print("Why are you ____")
+        elif predicted_sentiment == 1:
+            print("I am glad you are feeling ___")
+        else:
+            print("Thanks for letting me know")
 
     def function3(): 
         """

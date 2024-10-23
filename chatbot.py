@@ -33,6 +33,8 @@ class Chatbot:
         # Train the classifier
         self.train_logreg_sentiment_classifier()
 
+        self.user_movie_ratings = []
+
     ############################################################################
     # 1. WARM UP REPL                                                          #
     ############################################################################
@@ -124,7 +126,40 @@ class Chatbot:
         # code in a modular fashion to make it easier to improve and debug.    #
         ########################################################################
 
-        response = "I (the chatbot) processed '{}'".format(line)
+        response = ""
+        movie_indices = {}
+
+        # extract titles from input
+        movie_titles = self.extract_titles(line)
+        input_cardinality = len(movie_titles)
+
+        # analyze sentiment, either using the emotion one or 
+        sentiment = self.predict_sentiment_rule_based(line) if input_cardinality > 0 else self.function1()
+
+        for movie in movie_titles:
+            movie_indices[movie] = self.find_movies_idx_by_title(movie)
+
+        if input_cardinality > 0:
+            if sentiment == -1:
+                response = "It doesn't sound like that's your favorite. But, for clarification, did you mean: "
+
+                self.process()
+                return response
+            elif len(movie_titles) > 1:
+                response += "I asked for your favorite! Which do you like the best: "
+
+                for movie in movie_titles:
+                    response += f"\n-{movie}"
+            else:
+                response += "Nice!"
+
+                for movie in movie_titles:
+                    indices = self.find_movies_idx_by_title(movie)
+
+                    if indices > 1:
+                        response += " Did you mean:"
+                        
+        
 
         ########################################################################
         #                          END OF YOUR CODE                            #
@@ -374,14 +409,21 @@ class Chatbot:
         # transform list y into list of -1 if 'rotten' and 1 if 'fresh'
         converted_y = [-1 if rating == 'Rotten' else 1 for rating in y]
         data['Y_train'] = np.array(converted_y)
-    
+
+
         # convert texts
         texts = [text.lower() for text in texts]
-        self.count_vectorizer = CountVectorizer()
+        self.count_vectorizer = CountVectorizer(
+                                min_df=20, #only look at words that occur in at least 20 docs
+                                stop_words='english', # remove english stop words
+                                max_features=3000, #only select the top 3000 features 
+                                )
         data['X_train'] = self.count_vectorizer.fit_transform(texts)
 
+        print(data['X_train'].shape, data['Y_train'].shape)
+
         # training logreg on training data
-        self.model = linear_model.LogisticRegression(C=1.0, max_iter=1000, penalty='l2', solver='saga', random_state=0).fit(data['X_train'], data['Y_train']) 
+        self.model = linear_model.LogisticRegression().fit(data['X_train'], data['Y_train']) 
         ########################################################################
         #                          END OF YOUR CODE                            #
         ########################################################################

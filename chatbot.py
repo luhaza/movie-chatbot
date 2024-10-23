@@ -536,20 +536,73 @@ class Chatbot:
         corrected_words = [hamming_spell_check(token, vocabulary) for token in user_input.split()]
         return ' '.join(corrected_words)
 
-    def function2(self, user_input: str):
+    def function2(self, user_input: str) -> str:
         """
         TODO: delete and replace with your function.
         Be sure to put an adequate description in this docstring.  
         """
+        # call predict_sentiment_rule_based on the user's message
         predicted_sentiment = self.predict_sentiment_rule_based(user_input)
+        
+        # same regex use from predict_sentiment_rule_based
+        regex = r'\b\w+\b'
+        tokens = re.findall(regex, user_input.lower())
+        
+        # save all tokens
+        sentiment_tokens = []
+        anti_sentiment_tokens = []
 
-        if predicted_sentiment == -1:
-            print("Why are you ____")
-        elif predicted_sentiment == 1:
-            print("I am glad you are feeling ___")
+        # convert numerical sentiment val into str val so comparison is easier
+        if predicted_sentiment == 1:
+            predicted_sentiment = 'pos'
+        elif predicted_sentiment == -1:
+            predicted_sentiment = 'neg'
+        else: 
+            predicted_sentiment = 'reg'
+
+        # add token to sentiment or anti_sentiment list
+        for token in tokens:
+            if token in self.sentiment:
+                if self.sentiment[token] == predicted_sentiment:
+                    sentiment_tokens.append(token)
+                else:
+                    anti_sentiment_tokens.append(token)
+
+        sentiment_str = ""
+        if len(sentiment_tokens) == 1:
+            sentiment_str = sentiment_tokens[0]
+        elif len(sentiment_tokens) == 2:
+            sentiment_str = f"{sentiment_tokens[0]} and {sentiment_tokens[1]}"
+        elif len(sentiment_tokens) > 2:
+            sentiment_str = ", ".join(sentiment_tokens[:-1]) # join all but last token with ,
+            sentiment_str += f", and {sentiment_tokens[-1]}" # add last sentiment with , and for proper grammar
+
+        anti_sentiment_str = ""
+        if len(anti_sentiment_tokens) == 1:
+            anti_sentiment_str = anti_sentiment_tokens[0]
+        elif len(anti_sentiment_tokens) == 2:
+            anti_sentiment_str = f"{anti_sentiment_tokens[0]} and {anti_sentiment_tokens[1]}"
+        elif len(anti_sentiment_tokens) > 2:
+            anti_sentiment_str = ", ".join(anti_sentiment_tokens[:-1]) # join all but last token with ,
+            anti_sentiment_str += f", and {anti_sentiment_tokens[-1]}" # add last sentiment with , and for proper grammar
+
+        result = ''
+        if predicted_sentiment == 'neg':
+            if not anti_sentiment_tokens: 
+                result = f"I'm sorry to hear that you are {sentiment_str}. Here is a funny comedy movie that might cheer you up: "". I hope the rest of your day is better!"
+            else:
+                result = f"I'm sorry to hear that you are {sentiment_str}, but I am glad to hear you are at least {anti_sentiment_str}. Here is a funny comedy movie that might cheer you up: "" . I hope the rest of your day is better!"
+
+        elif predicted_sentiment == 'pos':
+            if not anti_sentiment_tokens: 
+                result = f"I am glad you are feeling {sentiment_str}! It must be the autumn leaves, the foliage is beautiful."
+            else:
+                result = f"I am glad you are feeling {sentiment_str}! It must be the autumn leaves, the foliage is beautiful. But I'm sorry to hear you are {anti_sentiment_str}, hopefully you day gets better."
         else:
-            print("Thanks for letting me know")
-
+            result = f"Thanks for letting me know."
+        
+        return result 
+        
     def function3(): 
         """
         Any additional functions beyond two count towards extra credit  

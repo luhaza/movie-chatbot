@@ -586,13 +586,37 @@ class Chatbot:
     # 5. Open-ended                                                            #
     ############################################################################
 
-    def function1(self, user_input: str) -> str:
+    def spell_checker(self, user_input: str) -> str:
         """
-        This function deals with simple spelling mistakes
+        This function takes user_input and returns the spell-corrected string if the function 
+        detects a spelling error. If there is no spelling error, the function returns the original string.
+
+        This function must have a user_input argument to run. 
+
+        
+
+        Arguments: 
+            - user_input (str): 
+                - the str user_input that the user writes while interacting with Letterbot
+
         Example: 
-            User types 'I liek "Avatar"' and the bot is able to correct "liek" to "like"
-        """
-        vocabulary = ['like', 'live', 'lives', 'look', 'liked', 'lie', 'life'] # potentially use a full vocab for spell checking 
+            spell_corrected = chatbot.spell_checker('I liek "Avatar"')
+            print(spell_corrected) // prints 'I like Avatar'
+
+        Example: 
+            spell_corrected = chatbot.spell_checker('I disliek "Kung Fu Panda 4" avd I lovi "The Martian"')
+            print(spell_corrected) // prints 'I dislike "Kung Fu Panda 4" avd I love "The Martian"'
+        """ 
+    
+        def load_wordlist(filepath: str) -> List[str]:
+            with open(filepath, 'r') as f:
+            # Read the file line by line and strip newline characters
+                words = f.read().splitlines()
+            return words
+
+        # Load the 1000 most common words from 'data.txt'
+        vocabulary = load_wordlist('deps/thousand_common.txt')
+        # vocabulary = ['like', 'live', 'lives', 'look', 'liked', 'lie', 'life'] # potentially use a full vocab for spell checking
     
         # calculate hamming distance
         def hamming_distance(word1: str, word2: str) -> int:
@@ -610,6 +634,9 @@ class Chatbot:
         
         # use hamming_distance to correct the misspelled word
         def hamming_spell_check(word: str, vocabulary: List[str]) -> str:
+            if any(c.isupper() for c in word) or word.startswith('"') or word.endswith('"'):
+                return word  # Return the word as is
+            
             # candidates are words that have same length as word...hamming
             candidates = [vw for vw in vocabulary if len(vw) == len(word)]
             if not candidates:
@@ -621,11 +648,31 @@ class Chatbot:
         # apply spell checker
         corrected_words = [hamming_spell_check(token, vocabulary) for token in user_input.split()]
         return ' '.join(corrected_words)
-
-    def function2(self, user_input: str) -> str:
+    
+    def clean_articles(self, titles: list): 
         """
-        TODO: delete and replace with your function.
-        Be sure to put an adequate description in this docstring.  
+        function2.  
+        """
+        def lowercase_articles(title: str) -> str:
+            articles = ['the', 'a', 'an']
+            words = title.split()
+            
+            # Skip the first word, which we want to keep uppercase
+            for i in range(1, len(words)):
+                if words[i].lower() in articles:
+                    words[i] = words[i].lower()
+            
+            return ' '.join(words)
+
+        for index, title in enumerate(titles):
+            title = lowercase_articles(title)
+            titles[index] = title.replace("The ", "").replace("An " ,"").replace("A ", "")
+
+        return titles
+
+    def function3(self, user_input: str) -> str:
+        """
+        function3. 
         """
         # call predict_sentiment_rule_based on the user's message
         predicted_sentiment = self.predict_sentiment_rule_based(user_input)
@@ -688,29 +735,6 @@ class Chatbot:
             result = f"Thanks for letting me know."
         
         return result 
-        
-    def clean_articles(self, titles): 
-        """
-        Any additional functions beyond two count towards extra credit  
-        """
-        def lowercase_articles(title: str) -> str:
-            articles = ['the', 'a', 'an']
-            words = title.split()
-            
-            # Skip the first word, which we want to keep uppercase
-            for i in range(1, len(words)):
-                if words[i].lower() in articles:
-                    words[i] = words[i].lower()
-            
-            return ' '.join(words)
-
-        for index, title in enumerate(titles):
-            title = lowercase_articles(title)
-            titles[index] = title.replace("The ", "").replace("An " ,"").replace("A ", "")
-
-        return titles
-
-
 
 if __name__ == '__main__':
     print('To run your chatbot in an interactive loop from the command line, '

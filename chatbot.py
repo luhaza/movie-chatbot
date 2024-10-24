@@ -40,6 +40,7 @@ class Chatbot:
         self.d_flag = 0
         self.recent_sentiment = None
         self.can_make_rec = len(self.user_movie_ratings) >= 5
+        self.user_wants_rec = 0
 
     ############################################################################
     # 1. WARM UP REPL                                                          #
@@ -135,6 +136,9 @@ class Chatbot:
 
         response = ""
 
+        if self.can_make_rec and line.lower() == "yes":
+            self.user_wants_rec = 1
+
         if self.d_flag:
             # self.d_flag = 0
             d = self.disambiguate_candidates(line, self.need_disambiguation[-1])
@@ -203,8 +207,12 @@ class Chatbot:
         
 
         # make recommendation if possible + user wants to
-        # if self.can_make_rec:
-        #     ""
+        if self.can_make_rec:
+            if self.user_wants_rec:
+                recommendations = self.recommend_movies(self.user_movie_ratings)
+                response += f"I recommend {recommendations}."
+            else:
+                response += "I have enough information to make recommendations, would you like me to? [Yes/No]"
                         
         ########################################################################
         #                          END OF YOUR CODE                            #

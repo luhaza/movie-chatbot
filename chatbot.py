@@ -591,9 +591,16 @@ class Chatbot:
         This function takes user_input and returns the spell-corrected string if the function 
         detects a spelling error. If there is no spelling error, the function returns the original string.
 
-        This function must have a user_input argument to run. 
+        This function deals with simple spelling mistakes through hamming distance, where words are compared
+        to other words that are the same length as the original. It swaps out a word in the string with the 
+        word in the vocabulary that has the closest hamming distance
 
-        
+        If the word is spelled correctly, the word with closest hamming distance would be itself, and thus 
+        there would be no spell correcting. 
+
+        This function ignores words that start with capital letters and also words in quotation marks. 
+
+        This function must have a user_input argument to run. 
 
         Arguments: 
             - user_input (str): 
@@ -605,18 +612,12 @@ class Chatbot:
 
         Example: 
             spell_corrected = chatbot.spell_checker('I disliek "Kung Fu Panda 4" avd I lovi "The Martian"')
-            print(spell_corrected) // prints 'I dislike "Kung Fu Panda 4" avd I love "The Martian"'
+            print(spell_corrected) // prints 'I dislike "Kung Fu Panda 4" and I love "The Martian"'
         """ 
-    
-        def load_wordlist(filepath: str) -> List[str]:
-            with open(filepath, 'r') as f:
-            # Read the file line by line and strip newline characters
-                words = f.read().splitlines()
-            return words
-
-        # Load the 1000 most common words from 'data.txt'
-        vocabulary = load_wordlist('deps/thousand_common.txt')
-        # vocabulary = ['like', 'live', 'lives', 'look', 'liked', 'lie', 'life'] # potentially use a full vocab for spell checking
+        
+        # Load the 1000+ most common words from 'thousand_common.txt'
+        with open('deps/thousand_common.txt', 'r') as f:
+            vocabulary = f.read().splitlines()
     
         # calculate hamming distance
         def hamming_distance(word1: str, word2: str) -> int:
@@ -626,23 +627,22 @@ class Chatbot:
             # use zip to create char pairs at each index for words 
             match_chars = zip(word1, word2)
 
-            # create list of True/False depending on if char is = 
+            # create list of True/False depending on if char is =, and return the sum
             matching_or_not = [c1 != c2 for c1, c2 in match_chars]
-
-            # return True's (1) + False's (0)
             return sum(matching_or_not)
         
         # use hamming_distance to correct the misspelled word
         def hamming_spell_check(word: str, vocabulary: List[str]) -> str:
+            # ignore uppercase or ""
             if any(c.isupper() for c in word) or word.startswith('"') or word.endswith('"'):
-                return word  # Return the word as is
+                return word
             
-            # candidates are words that have same length as word...hamming
+            # filter for vocabulary that has same length as word
             candidates = [vw for vw in vocabulary if len(vw) == len(word)]
             if not candidates:
-                return word  # return word as is
+                return word
 
-            # find w with smallest hamming distance to word and return
+            # find w with smallest hamming distance and return
             return min(candidates, key=lambda w: hamming_distance(word, w))
         
         # apply spell checker
@@ -651,7 +651,23 @@ class Chatbot:
     
     def clean_articles(self, titles: list): 
         """
-        function2.  
+        This function deals with articles in movie titles. 
+
+        If there is an article in a movie title, in this dataset, the article is moved to 
+        the end of the title to spotlight the more important words in the title of the movie. 
+
+        The function recognizes those articles and manipulates the input such that the 
+        correct movie can be ID'ed
+
+        This function must have a titles: list of movie titles to run. 
+
+        Arguments: 
+            - titles (list): 
+                - the list titles that is the list of movie titles picked up from the user input
+
+        Example: 
+            clean_articles = chatbot.clean_articles('I liked "An American in Paris"')
+            print(clean_articles) // prints 'American in Paris, An (1951)'
         """
         def lowercase_articles(title: str) -> str:
             articles = ['the', 'a', 'an']
@@ -663,7 +679,7 @@ class Chatbot:
                     words[i] = words[i].lower()
             
             return ' '.join(words)
-
+        
         for index, title in enumerate(titles):
             title = lowercase_articles(title)
             titles[index] = title.replace("The ", "").replace("An " ,"").replace("A ", "")

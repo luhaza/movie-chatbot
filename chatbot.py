@@ -35,6 +35,9 @@ class Chatbot:
 
         self.user_movie_ratings = []
 
+        self.emotion_flag = 1
+        self.disambiguate_flag = 0
+
     ############################################################################
     # 1. WARM UP REPL                                                          #
     ############################################################################
@@ -62,7 +65,8 @@ class Chatbot:
     def greeting(self) -> str:
         """Return a message that the chatbot uses to greet the user."""
 
-        greeting_message = f'Hi! I am {self.name}! I am a chatbot that specializes in movie recommendations. My personal favorite is "The Prestige." What is yours?'
+        # greeting_message = f'Hi! I am {self.name}! I am a chatbot that specializes in movie recommendations. My personal favorite is "The Prestige." What is yours?'
+        greeting_message = f'Hi! I am {self.name}, a chatbot that specializes in movie recommendations. How are you doing today?'
 
         return greeting_message
 
@@ -127,37 +131,63 @@ class Chatbot:
         ########################################################################
 
         response = ""
+
+        if self.emotion_flag:
+            self.emotion_flag = 0
+            # return self.function2(line)
+            return "Sorry to hear that."
+
+
+        safe_fail_response = "I did not pick up any movie titles in your response. Make sure to wrap each title in double quotes."
         movie_indices = {}
 
         # extract titles from input
-        movie_titles = self.extract_titles(line)
+        movie_titles = self.clean_articles(self.extract_titles(line))
         input_cardinality = len(movie_titles)
 
-        # analyze sentiment, either using the emotion one or 
-        sentiment = self.predict_sentiment_rule_based(line) if input_cardinality > 0 else self.function1()
+        if input_cardinality == 0:
+            response = "I did not pick up any movie titles in your response. Please remember to wrap each title in double quotes."
+            return response
+        # else:
 
+
+        # analyze sentiment, using emotion one if there is no movie in quotes
+        sentiment = self.predict_sentiment_rule_based(line)
+
+        # get indices
         for movie in movie_titles:
             movie_indices[movie] = self.find_movies_idx_by_title(movie)
 
-        if input_cardinality > 0:
-            if sentiment == -1:
-                response = "It doesn't sound like that's your favorite. But, for clarification, did you mean: "
+            if len(movie_indices[movie]) > 1:
+                self.disambiguate_flag = 1
+                response = f"There are multiple movies with the name {movie}. Which one were you referring to?"
+                for index in movie_indices[movie]:
+                    response += f"\n- {self.titles[index][0]}"
 
-                self.process()
-                return response
-            elif len(movie_titles) > 1:
-                response += "I asked for your favorite! Which do you like the best: "
+        
 
-                for movie in movie_titles:
-                    response += f"\n-{movie}"
-            else:
-                response += "Nice!"
+        
 
-                for movie in movie_titles:
-                    indices = self.find_movies_idx_by_title(movie)
 
-                    if indices > 1:
-                        response += " Did you mean:"
+        # if input_cardinality > 0:
+        #     if sentiment == -1:
+        #         response = "It doesn't sound like that's your favorite. But, for clarification, did you mean: "
+
+        #         self.process()
+        #         return response
+        #     elif len(movie_titles) > 1:
+        #         response += "I asked for your favorite! Which do you like the best: "
+
+        #         for movie in movie_titles:
+        #             response += f"\n-{movie}"
+        #     else:
+        #         response += "Nice!"
+
+        #         for movie in movie_titles:
+        #             indices = self.find_movies_idx_by_title(movie)
+
+        #             if indices > 1:
+        #                 response += " Did you mean:"
                         
         
 
@@ -244,7 +274,7 @@ class Chatbot:
         regex = rf'{title}'
 
         for index, t in enumerate(self.titles):
-            if re.search(regex, t[0]):
+            if re.search(regex, t[0], re.IGNORECASE):
                 ret.append(index)
 
         return ret
@@ -592,11 +622,27 @@ class Chatbot:
         else:
             print("Thanks for letting me know")
 
-    def function3(): 
+    def clean_articles(self, titles): 
         """
         Any additional functions beyond two count towards extra credit  
         """
-        pass 
+        def lowercase_articles(title: str) -> str:
+            articles = ['the', 'a', 'an']
+            words = title.split()
+            
+            # Skip the first word, which we want to keep uppercase
+            for i in range(1, len(words)):
+                if words[i].lower() in articles:
+                    words[i] = words[i].lower()
+            
+            return ' '.join(words)
+
+        for index, title in enumerate(titles):
+            title = lowercase_articles(title)
+            titles[index] = title.replace("The ", "").replace("An " ,"").replace("A ", "")
+
+        return titles
+
 
 
 if __name__ == '__main__':

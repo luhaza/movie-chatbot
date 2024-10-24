@@ -33,10 +33,13 @@ class Chatbot:
         # Train the classifier
         self.train_logreg_sentiment_classifier()
 
-        self.user_movie_ratings = []
+        self.user_movie_ratings = {}
 
         self.emotion_flag = 1
-        self.disambiguate_flag = 0
+        self.need_disambiguation = []
+        self.d_flag = 0
+        self.recent_sentiment = None
+        self.can_make_rec = len(self.user_movie_ratings) >= 5
 
     ############################################################################
     # 1. WARM UP REPL                                                          #
@@ -132,6 +135,36 @@ class Chatbot:
 
         response = ""
 
+        if self.d_flag:
+            # self.d_flag = 0
+            d = self.disambiguate_candidates(line, self.need_disambiguation[-1])
+            if len(d) == 1:
+                self.user_movie_ratings[d[0]] = self.recent_sentiment
+                print(self.user_movie_ratings)
+                self.d_flag = 0
+                self.need_disambiguation.pop()
+                response += "Thank you!\n"
+            elif len(d) == 0:
+                response += "Clarification did not help. Please try again."
+                return response
+            else:
+                response += "I'm sorry. I still do not understand. Did you mean:"
+                for index in d:
+                    response += f"\n- {self.titles[index][0]}"
+                return response
+
+        if len(self.need_disambiguation) > 0:
+            response += "Which did you mean:"
+            for index in self.need_disambiguation[-1]:
+                response += f"\n- {self.titles[index][0]}"
+            self.d_flag = 1
+            return response
+
+
+        spell_checked = self.function1(line)
+        if spell_checked != line:
+            response += f"I'm assuming you meant {spell_checked}."
+
         if self.emotion_flag:
             self.emotion_flag = 0
             # return self.function2(line)
@@ -145,52 +178,34 @@ class Chatbot:
         movie_titles = self.clean_articles(self.extract_titles(line))
         input_cardinality = len(movie_titles)
 
-        if input_cardinality == 0:
-            response = "I did not pick up any movie titles in your response. Please remember to wrap each title in double quotes."
+        if input_cardinality == 0 and "Thank you" not in response:
+            return safe_fail_response
+        elif "Thank you" in response:
+            response += "What other movies do you have strong opinions on? I need at least 5 opinions to make a recommendation."
             return response
-        # else:
 
-
-        # analyze sentiment, using emotion one if there is no movie in quotes
-        sentiment = self.predict_sentiment_rule_based(line)
+        # analyze sentiment
+        self.recent_sentiment = self.predict_sentiment_rule_based(line)
 
         # get indices
         for movie in movie_titles:
             movie_indices[movie] = self.find_movies_idx_by_title(movie)
 
             if len(movie_indices[movie]) > 1:
-                self.disambiguate_flag = 1
-                response = f"There are multiple movies with the name {movie}. Which one were you referring to?"
-                for index in movie_indices[movie]:
-                    response += f"\n- {self.titles[index][0]}"
+                self.need_disambiguation.append(movie_indices[movie])
+            else:
+                self.user_movie_ratings[movie_indices[movie][0]] = self.recent_sentiment
+                print(self.user_movie_ratings)
 
+        if len(self.need_disambiguation) > 0:
+            response += " There are multiple movies with names similar to one or more of your inputs. Say anything to proceed with disambiguation."
+            return response
         
 
-        
-
-
-        # if input_cardinality > 0:
-        #     if sentiment == -1:
-        #         response = "It doesn't sound like that's your favorite. But, for clarification, did you mean: "
-
-        #         self.process()
-        #         return response
-        #     elif len(movie_titles) > 1:
-        #         response += "I asked for your favorite! Which do you like the best: "
-
-        #         for movie in movie_titles:
-        #             response += f"\n-{movie}"
-        #     else:
-        #         response += "Nice!"
-
-        #         for movie in movie_titles:
-        #             indices = self.find_movies_idx_by_title(movie)
-
-        #             if indices > 1:
-        #                 response += " Did you mean:"
+        # make recommendation if possible + user wants to
+        # if self.can_make_rec:
+        #     ""
                         
-        
-
         ########################################################################
         #                          END OF YOUR CODE                            #
         ########################################################################
@@ -674,7 +689,7 @@ class Chatbot:
         
         return result 
         
-    def function3(): 
+    def clean_articles(self, titles): 
         """
         Any additional functions beyond two count towards extra credit  
         """

@@ -639,6 +639,14 @@ class Chatbot:
 
         This function must have a user_input argument to run. 
 
+        2 vocabularies:
+            - the small vocabulary of 8 words: works for the original example (provided by Katie). 
+            Katie said using this corpus is enough for full credit
+            - the thousand_common.txt (source: https://gist.github.com/deekayen/4148741) found online through a quick Google search
+            Katie said this would show us going "above and beyond", thus counting towards extra credit
+
+        Talked to katie, ok with just this. But wanted to do some extra (credit) so imported a vocabulary
+
         Arguments: 
             - user_input (str): 
                 - the str user_input that the user writes while interacting with Letterbot
@@ -651,6 +659,8 @@ class Chatbot:
             spell_corrected = chatbot.spell_checker('I disliek "Kung Fu Panda 4" avd I lovi "The Martian"')
             print(spell_corrected) // prints 'I dislike "Kung Fu Panda 4" and I love "The Martian"'
         """ 
+        # the small vocabulary to pass the original example (provided by Katie in the README)
+        # vocabulary = ['like', 'live', 'lives', 'look', 'liked', 'lie', 'life'] 
         
         # Load the 1000+ most common words from 'thousand_common.txt'
         with open('deps/thousand_common.txt', 'r') as f:
@@ -659,7 +669,7 @@ class Chatbot:
         # calculate hamming distance
         def hamming_distance(word1: str, word2: str) -> int:
             if len(word1) != len(word2):
-                return float('inf')  # large num if not equal len
+                return float('inf') 
             
             # use zip to create char pairs at each index for words 
             match_chars = zip(word1, word2)
@@ -682,7 +692,7 @@ class Chatbot:
             # find w with smallest hamming distance and return
             return min(candidates, key=lambda w: hamming_distance(word, w))
         
-        # apply spell checker
+        # apply spell checker for every word in user input
         corrected_words = [hamming_spell_check(token, vocabulary) for token in user_input.split()]
         return ' '.join(corrected_words)
     
@@ -703,8 +713,8 @@ class Chatbot:
                 - the list titles that is the list of movie titles picked up from the user input
 
         Example: 
-            clean_articles = chatbot.clean_articles('I liked "An American in Paris"')
-            print(clean_articles) // prints 'American in Paris, An (1951)'
+            clean_articles = chatbot.clean_articles(["An American in Paris"])
+            print(clean_articles) // prints ['American in Paris']
         """
         def lowercase_articles(title: str) -> str:
             articles = ['the', 'a', 'an']
@@ -723,9 +733,22 @@ class Chatbot:
 
         return titles
 
-    def function3(self, user_input: str) -> str:
+    def respond_emotion(self, user_input: str) -> str:
         """
-        function3. 
+        This is an extra credit function. 
+
+        This function identifies and responds to emotions, providing the user with 
+        an uplifting message and asking the user to make a movie recommendation
+
+        The function uses predict_sentiment_rule_based() to get the sentiment of the users message
+        Depending on the sentiment (pos,neg), the function then classifies the tokens in the message
+        as either sentiment (same sentiment as prediction) or anti_sentiment (opposite sentiment as 
+        prediction). It then combines the sentiments into a grammatically correct form, and compounds
+        it to the output. The output messages are hardcoded, but each different user sentiment combination
+        has a specific response. 
+
+        Example:
+            - Users type 'I am angry'
         """
         # call predict_sentiment_rule_based on the user's message
         predicted_sentiment = self.predict_sentiment_rule_based(user_input)
@@ -754,36 +777,31 @@ class Chatbot:
                 else:
                     anti_sentiment_tokens.append(token)
 
-        sentiment_str = ""
-        if len(sentiment_tokens) == 1:
-            sentiment_str = sentiment_tokens[0]
-        elif len(sentiment_tokens) == 2:
-            sentiment_str = f"{sentiment_tokens[0]} and {sentiment_tokens[1]}"
-        elif len(sentiment_tokens) > 2:
-            sentiment_str = ", ".join(sentiment_tokens[:-1]) # join all but last token with ,
-            sentiment_str += f", and {sentiment_tokens[-1]}" # add last sentiment with , and for proper grammar
+        def format_tokens(tokens: List[str]) -> str:
+            if len(tokens) == 1:
+                return tokens[0]
+            elif len(tokens) == 2:
+                return f"{tokens[0]} and {tokens[1]}"
+            elif len(tokens) > 2:
+                return f"{', '.join(tokens[:-1])}, and {tokens[-1]}"
+            return ' '
 
-        anti_sentiment_str = ""
-        if len(anti_sentiment_tokens) == 1:
-            anti_sentiment_str = anti_sentiment_tokens[0]
-        elif len(anti_sentiment_tokens) == 2:
-            anti_sentiment_str = f"{anti_sentiment_tokens[0]} and {anti_sentiment_tokens[1]}"
-        elif len(anti_sentiment_tokens) > 2:
-            anti_sentiment_str = ", ".join(anti_sentiment_tokens[:-1]) # join all but last token with ,
-            anti_sentiment_str += f", and {anti_sentiment_tokens[-1]}" # add last sentiment with , and for proper grammar
+        # format both sentiment and anti_sentiment tokens
+        sentiment_str = format_tokens(sentiment_tokens)
+        anti_sentiment_str = format_tokens(anti_sentiment_tokens)
 
-        result = ''
+        result = ' '
         if predicted_sentiment == 'neg':
             if not anti_sentiment_tokens: 
-                result = f"I'm sorry to hear that you are {sentiment_str}. Here is a funny comedy movie that might cheer you up: "". I hope the rest of your day is better!"
+                result = f"I'm sorry to hear that you are {sentiment_str}. Maybe a good movie recommendation will cheer you up. What's your favorite movie?"
             else:
-                result = f"I'm sorry to hear that you are {sentiment_str}, but I am glad to hear you are at least {anti_sentiment_str}. Here is a funny comedy movie that might cheer you up: "" . I hope the rest of your day is better!"
+                result = f"I'm sorry to hear that you are {sentiment_str}, but I am glad to hear you are at least {anti_sentiment_str}. Good movies tend to make your day better. What's a movie you like?"
 
         elif predicted_sentiment == 'pos':
             if not anti_sentiment_tokens: 
-                result = f"I am glad you are feeling {sentiment_str}! It must be the autumn leaves, the foliage is beautiful."
+                result = f"I am glad you are feeling {sentiment_str}! A movie will definitely make you day even better! What's a movie opinion of yours?"
             else:
-                result = f"I am glad you are feeling {sentiment_str}! It must be the autumn leaves, the foliage is beautiful. But I'm sorry to hear you are {anti_sentiment_str}, hopefully you day gets better."
+                result = f"I am glad you are feeling {sentiment_str}! But I'm sorry to hear you are {anti_sentiment_str}. Maybe a movie will make your day better? What's your favorite movie?"
         else:
             result = f"Thanks for letting me know."
         

@@ -39,8 +39,22 @@ class Chatbot:
         self.need_disambiguation = []
         self.d_flag = 0
         self.recent_sentiment = None
-        self.can_make_rec = len(self.user_movie_ratings) >= 5
+        self.can_make_rec = 0
         self.user_wants_rec = 0
+
+        self.positive_sayings = [
+            "That's a good one!",
+            "Cool!",
+            "I like that one too.",
+        ]
+
+        self.negative_sayings = [
+            "Yeah, I've heard bad things about that one.",
+            "I didn't like that one either.",
+            "Really? I liked that one.",
+        ]
+
+        self.i = 0
 
     ############################################################################
     # 1. WARM UP REPL                                                          #
@@ -135,19 +149,24 @@ class Chatbot:
         ########################################################################
 
         response = ""
+        self.can_make_rec = len(self.user_movie_ratings) >= 4
+        # print(self.can_make_rec)
 
         if self.can_make_rec and line.lower() == "yes":
             self.user_wants_rec = 1
+        elif self.can_make_rec and line.lower() == "no":
+            response += "Noted! What else do you like/dislike?"
+            return response
 
         if self.d_flag:
             # self.d_flag = 0
             d = self.disambiguate_candidates(line, self.need_disambiguation[-1])
             if len(d) == 1:
                 self.user_movie_ratings[d[0]] = self.recent_sentiment
-                print(self.user_movie_ratings)
+                # print(self.user_movie_ratings)
                 self.d_flag = 0
                 self.need_disambiguation.pop()
-                response += "Thank you!\n"
+                response += "Thank you! "
             elif len(d) == 0:
                 response += "Clarification did not help. Please try again."
                 return response
@@ -164,10 +183,10 @@ class Chatbot:
             self.d_flag = 1
             return response
 
-
-        spell_checked = self.function1(line)
-        if spell_checked != line:
-            response += f"I'm assuming you meant {spell_checked}."
+        # SPELL CHECK
+        # spell_checked = self.spell_checker(line)
+        # if spell_checked != line:
+        #     response += f"I'm assuming you meant {spell_checked}.\n"
 
         if self.emotion_flag:
             self.emotion_flag = 0
@@ -175,17 +194,17 @@ class Chatbot:
             return "Sorry to hear that."
 
 
-        safe_fail_response = "I did not pick up any movie titles in your response. Make sure to wrap each title in double quotes."
+        safe_fail_response = "Error – make sure to wrap each title in double quotes. If you did, the title may not be in my database."
         movie_indices = {}
 
         # extract titles from input
         movie_titles = self.clean_articles(self.extract_titles(line))
         input_cardinality = len(movie_titles)
 
-        if input_cardinality == 0 and "Thank you" not in response:
+        if input_cardinality == 0 and "Thank you" not in response and not self.user_wants_rec:
             return safe_fail_response
         elif "Thank you" in response:
-            response += "What other movies do you have strong opinions on? I need at least 5 opinions to make a recommendation."
+            response += "What other movies do you have strong opinions on?"
             return response
 
         # analyze sentiment
@@ -197,9 +216,11 @@ class Chatbot:
 
             if len(movie_indices[movie]) > 1:
                 self.need_disambiguation.append(movie_indices[movie])
+            elif len(movie_indices[movie]) == 0:
+                response += f"I do not recognize the movie {movie}."
             else:
                 self.user_movie_ratings[movie_indices[movie][0]] = self.recent_sentiment
-                print(self.user_movie_ratings)
+                # print(self.user_movie_ratings)
 
         if len(self.need_disambiguation) > 0:
             response += " There are multiple movies with names similar to one or more of your inputs. Say anything to proceed with disambiguation."
@@ -210,14 +231,24 @@ class Chatbot:
         if self.can_make_rec:
             if self.user_wants_rec:
                 recommendations = self.recommend_movies(self.user_movie_ratings)
-                response += f"I recommend {recommendations}."
+                response += f"I recommend {recommendations}. Now, you can give me more information so I can make more recommendations, or, if you're satisfied, quit out!"
+                self.user_wants_rec = 0
+                return response
             else:
                 response += "I have enough information to make recommendations, would you like me to? [Yes/No]"
+                return response
                         
-        ########################################################################
-        #                          END OF YOUR CODE                            #
-        ########################################################################
-        return response
+        if len(response) == 0:
+            if self.recent_sentiment == -1:
+                saying = self.negative_sayings[self.i % 3]
+                response += saying
+            elif self.recent_sentiment == 1:
+                saying = self.positive_sayings[self.i % 3]
+                response += saying
+
+            self.i += 1
+
+        return response + " Anything else?"
 
     def extract_titles(self, user_input: str) -> List[str]:
         """
@@ -471,9 +502,7 @@ class Chatbot:
                                 max_features=1000, #only select the top 1000 features 
                                 ) 
         data['X_train'] = self.count_vectorizer.fit_transform(texts)
-
-        print(data['X_train'].shape, data['Y_train'].shape)
-
+        
         # training logreg on training data
         self.model = linear_model.LogisticRegression().fit(data['X_train'], data['Y_train']) 
         ########################################################################

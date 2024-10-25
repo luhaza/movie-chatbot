@@ -10,7 +10,6 @@ import re
 import sklearn
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import linear_model
-import nltk 
 from collections import defaultdict, Counter
 from typing import List, Dict, Union, Tuple
 
@@ -149,7 +148,7 @@ class Chatbot:
         ########################################################################
 
         response = ""
-        self.can_make_rec = len(self.user_movie_ratings) >= 4
+        self.can_make_rec = len(self.user_movie_ratings) > 4
         # print(self.can_make_rec)
 
         if self.can_make_rec and line.lower() == "yes":
@@ -183,17 +182,17 @@ class Chatbot:
             self.d_flag = 1
             return response
 
-        # SPELL CHECK
-        # spell_checked = self.spell_checker(line)
-        # if spell_checked != line:
-        #     response += f"I'm assuming you meant {spell_checked}.\n"
-
+        # spell check
+        if len(line) > 20:
+            spell_checked = self.spell_checker(line)
+            if spell_checked != line:
+                response += f"I'm assuming you meant \"{spell_checked}\".\n"
+        
+        # emotion response
         if self.emotion_flag:
             self.emotion_flag = 0
-            # return self.function2(line)
-            return "Sorry to hear that."
-
-
+            return self.respond_emotion(line)
+            
         safe_fail_response = "Error – make sure to wrap each title in double quotes. If you did, the title may not be in my database."
         movie_indices = {}
 
@@ -396,7 +395,6 @@ class Chatbot:
 
         return matches
         
-
     ############################################################################
     # 3. Sentiment                                                             #
     ########################################################################### 
@@ -720,7 +718,7 @@ class Chatbot:
             articles = ['the', 'a', 'an']
             words = title.split()
             
-            # Skip the first word, which we want to keep uppercase
+            # skip the first word, which we want to keep uppercase
             for i in range(1, len(words)):
                 if words[i].lower() in articles:
                     words[i] = words[i].lower()

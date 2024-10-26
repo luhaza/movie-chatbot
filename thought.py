@@ -66,7 +66,10 @@ system. Why?
 
 Q3_your_answer = """
 
-We used the rule-based/lexicon-based sentiment analysis module. We chose this route because...
+We used the rule-based/lexicon-based sentiment analysis module. We chose this route because it performed 
+better during testing of the chatbot. For a simple input like 'I like "X"', statistical predicts -1.
+We felt that 'like' would be commonly used while interacting with the chatbot, so we opted for rule-based, which
+predicted 1.
 
 """
 
